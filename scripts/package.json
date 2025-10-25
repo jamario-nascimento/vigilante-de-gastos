@@ -1,0 +1,21 @@
+{
+  "name": "vigilante-gastos-seed",
+  "private": true,
+  "version": "0.1.0",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p .",
+    "seed": "ts-node ./seed.ts",
+    "seed:all": "ts-node ./seed-all-users.ts"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "dayjs": "^1.11.13",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
+}
