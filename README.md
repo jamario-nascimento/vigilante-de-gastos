@@ -61,6 +61,7 @@ Foca em visão analítica, simplicidade de uso e experiência visual imersiva.
    - `VITE_FIREBASE_STORAGE_BUCKET`
    - `VITE_FIREBASE_MESSAGING_SENDER_ID`
    - `VITE_FIREBASE_APP_ID`
+   - `VITE_FIREBASE_MEASUREMENT_ID` (opcional, usado para Analytics)
 3. Reinicie o servidor de desenvolvimento após alterar o `.env.local`.
 
 ---
@@ -123,6 +124,17 @@ Como publicar:
 - Gerar `.firebaserc` a partir do `.env` (raiz do projeto):
   - Defina `FIREBASE_PROJECT_ID=seu-project-id` no `.env.local`
   - Rode: `npm run configure:firebase`
+
+- Setup completo via script (gera .firebaserc e faz deploy de regras/índices):
+  - Pré‑requisitos:
+    - CLI do Firebase instalada: `npm i -g firebase-tools`
+    - Autenticação: `firebase login`
+  - Execução: `npm run firebase:setup`
+    - O comando valida se o `.env.local` contém `FIREBASE_PROJECT_ID` (ou `GCLOUD_PROJECT`/`GOOGLE_CLOUD_PROJECT`/`VITE_FIREBASE_PROJECT_ID`).
+    - Em caso de ausência, exibirá uma mensagem amigável e abortará o processo.
+  - Alternativas:
+    - Deploy só das regras: `npm run firebase:deploy:rules`
+    - Deploy só dos índices: `npm run firebase:deploy:indexes`
 - Rodar seed para um usuário (scripts):
   - `cd scripts && npm install`
   - PowerShell: `$Env:GOOGLE_APPLICATION_CREDENTIALS="C:\\caminho\\key.json"`

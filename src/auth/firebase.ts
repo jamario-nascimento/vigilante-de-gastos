@@ -20,6 +20,7 @@ const {
   VITE_FIREBASE_MESSAGING_SENDER_ID,
   VITE_FIREBASE_APP_ID,
 } = import.meta.env as Record<string, string | undefined>;
+const { VITE_FIREBASE_MEASUREMENT_ID } = import.meta.env as Record<string, string | undefined>;
 
 function ensure(name: string, value: string | undefined): string {
   if (!value) {
@@ -38,11 +39,28 @@ const firebaseConfig = {
     VITE_FIREBASE_MESSAGING_SENDER_ID
   ),
   appId: ensure("VITE_FIREBASE_APP_ID", VITE_FIREBASE_APP_ID),
+  // Opcional: necessário para Analytics
+  ...(VITE_FIREBASE_MEASUREMENT_ID ? { measurementId: VITE_FIREBASE_MEASUREMENT_ID } : {}),
 };
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Inicialização opcional do Analytics no cliente
+export async function initAnalytics() {
+  if (typeof window === "undefined") return;
+  if (!VITE_FIREBASE_MEASUREMENT_ID) return;
+  try {
+    const { getAnalytics, isSupported } = await import("firebase/analytics");
+    if (await isSupported()) {
+      getAnalytics(app);
+    }
+  } catch (e) {
+    // Ignora falhas de analytics para não impactar a aplicação
+    console.warn("Firebase Analytics não inicializado:", (e as any)?.message ?? e);
+  }
+}
 
 // Providers
 export const googleProvider = new GoogleAuthProvider();
