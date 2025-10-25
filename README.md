@@ -153,3 +153,19 @@ Goiás, Brasil
 <p align="center">
   <i>A melhor forma de controlar o futuro é monitorar o presente.</i>
 </p>
+
+---
+
+## Segurança e API Key (Firebase)
+
+- Em apps Web, a `VITE_FIREBASE_API_KEY` fica visível no bundle. Isso é esperado no Firebase Web e não concede acesso por si só; a segurança depende das Regras do Firestore e da configuração do Auth.
+- Boas práticas:
+  - Restrinja a chave no Google Cloud Console a HTTP Referrers (domínios do seu app e `localhost`).
+  - Restrinja por API apenas ao necessário (ex.: Identity Toolkit API, conforme o uso do app).
+  - Rotacione a chave se tiver sido exposta fora do controle (ex.: commits públicos) e atualize seu `.env.local`.
+
+### Verificação de segredos no código
+
+- Rode o scanner simples (ignora `dist/` e `node_modules`):
+  - `npm run scan:secrets`
+- Se listar ocorrências, revise os arquivos. Em particular, não versionar `dist/` e evitar colocar chaves diretamente no código-fonte.

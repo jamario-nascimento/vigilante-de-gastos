@@ -11,7 +11,8 @@
     "configure:firebase": "node ./generate-firebaserc.mjs --env=.env.local",
     "firebase:deploy:rules": "firebase deploy --only firestore:rules",
     "firebase:deploy:indexes": "firebase deploy --only firestore:indexes",
-    "firebase:setup": "node ./check-firebase-env.mjs --env=.env.local && npm run configure:firebase && npm run firebase:deploy:rules && npm run firebase:deploy:indexes"
+    "firebase:setup": "node ./check-firebase-env.mjs --env=.env.local && npm run configure:firebase && npm run firebase:deploy:rules && npm run firebase:deploy:indexes",
+    "scan:secrets": "node ./scan-secrets.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
