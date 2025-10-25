@@ -6,7 +6,7 @@ type Props = {
   children: ReactNode;
 };
 
-export default function ProtectedRoute({ children }: Props) {
+export default function ProtectedRoute({ children }: Readonly<Props>) {
   const { user, loading } = useAuth();
   const location = useLocation();
 

@@ -1,4 +1,4 @@
-import * as Dialog from '@radix-ui/react-dialog';
+﻿import * as Dialog from '@radix-ui/react-dialog';
 import { ReactNode } from 'react';
 
 export function Modal({ title, children }: { title: string; children: ReactNode }) {
@@ -12,9 +12,10 @@ export function Modal({ title, children }: { title: string; children: ReactNode 
         <Dialog.Content className="fixed left-1/2 top-1/2 w-[90%] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
           <Dialog.Title className="text-xl font-semibold mb-4">{title}</Dialog.Title>
           {children}
-          <Dialog.Close className="absolute top-2 right-2">✕</Dialog.Close>
+          <Dialog.Close className="absolute top-2 right-2" aria-label="Fechar">×</Dialog.Close>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
   );
 }
+

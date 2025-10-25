@@ -7,6 +7,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   signInWithPopup,
+  signInWithRedirect,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
@@ -48,8 +49,22 @@ export const googleProvider = new GoogleAuthProvider();
 export const githubProvider = new GithubAuthProvider();
 
 // Helpers
-export const loginWithGoogle = () => signInWithPopup(auth, googleProvider);
-export const loginWithGithub = () => signInWithPopup(auth, githubProvider);
+async function signInWithProvider(provider: GoogleAuthProvider | GithubAuthProvider) {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (e: any) {
+    const code = e?.code as string | undefined;
+    if (code === "auth/popup-blocked") {
+      // fallback automático para redirect quando popup é bloqueado pelo navegador
+      await signInWithRedirect(auth, provider);
+      return;
+    }
+    throw e;
+  }
+}
+
+export const loginWithGoogle = () => signInWithProvider(googleProvider);
+export const loginWithGithub = () => signInWithProvider(githubProvider);
 export const registerWithEmail = (email: string, password: string) =>
   createUserWithEmailAndPassword(auth, email, password);
 export const loginWithEmail = (email: string, password: string) =>

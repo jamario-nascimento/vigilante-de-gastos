@@ -1,5 +1,4 @@
-// 📁 src/auth/AuthContext.tsx
-import { createContext, useContext, useEffect, useState } from "react";
+﻿import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
@@ -26,25 +25,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(firebaseUser);
       setLoading(true);
 
-      if (firebaseUser) {
-        const userRef = doc(db, "users", firebaseUser.uid);
-        const userSnap = await getDoc(userRef);
+      try {
+        if (firebaseUser) {
+          const userRef = doc(db, "users", firebaseUser.uid);
+          const userSnap = await getDoc(userRef);
 
-        if (!userSnap.exists()) {
-          await setDoc(userRef, {
-            email: firebaseUser.email,
-            role: "viewer", // 👥 padrão: viewer
-          });
-          setRole("viewer");
+          if (!userSnap.exists()) {
+            await setDoc(
+              userRef,
+              {
+                email: firebaseUser.email,
+                role: "viewer",
+              },
+              { merge: true }
+            );
+            setRole("viewer");
+          } else {
+            const data = userSnap.data() as { role?: string };
+            setRole(data?.role ?? "viewer");
+          }
         } else {
-          const data = userSnap.data();
-          setRole(data.role);
+          setRole(null);
         }
-      } else {
+      } catch (e) {
+        console.error("AuthContext: erro ao sincronizar usuário/roles", e);
         setRole(null);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -58,3 +66,4 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
+

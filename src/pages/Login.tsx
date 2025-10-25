@@ -1,12 +1,13 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
   loginWithGoogle,
   loginWithGithub,
   loginWithEmail,
-  registerWithEmail
+  registerWithEmail,
 } from "@/auth/firebase";
 import { useAuth } from "@/auth/AuthContext";
 import { Navigate } from "react-router-dom";
+import { isFirebaseError } from "@/utils/isFirebaseError";
 
 const Login = () => {
   const { user, loading } = useAuth();
@@ -21,7 +22,18 @@ const Login = () => {
     try {
       await loginWithEmail(email, password);
     } catch (err) {
-      setError("Credenciais inválidas");
+      if (isFirebaseError(err)) {
+        const map: Record<string, string> = {
+          "auth/operation-not-allowed": "Habilite o método Email/Senha no Firebase.",
+          "auth/invalid-credential": "Credenciais inválidas.",
+          "auth/user-not-found": "Usuário não encontrado.",
+          "auth/wrong-password": "Senha incorreta.",
+          "auth/too-many-requests": "Muitas tentativas. Tente novamente mais tarde.",
+        };
+        setError(map[err.code] ?? `Erro ao entrar: ${err.code}`);
+      } else {
+        setError("Erro ao entrar");
+      }
     }
   };
 
@@ -29,7 +41,17 @@ const Login = () => {
     try {
       await registerWithEmail(email, password);
     } catch (err) {
-      setError("Erro ao registrar usuário");
+      if (isFirebaseError(err)) {
+        const map: Record<string, string> = {
+          "auth/operation-not-allowed": "Habilite Email/Senha em Authentication > Sign-in method.",
+          "auth/email-already-in-use": "E-mail já em uso.",
+          "auth/weak-password": "Senha fraca (mín. 6 caracteres).",
+          "auth/invalid-email": "E-mail inválido.",
+        };
+        setError(map[err.code] ?? `Erro ao registrar: ${err.code}`);
+      } else {
+        setError("Erro ao registrar usuário");
+      }
     }
   };
 
