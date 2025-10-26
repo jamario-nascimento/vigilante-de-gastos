@@ -1,7 +1,11 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import admin from 'firebase-admin';
 import { runSeedPipeline } from './seed-helpers';
+import dotenv from 'dotenv';
 
+// Carrega variáveis de ambiente do .env na raiz do projeto
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 type Argv = Record<string, string | undefined>;
 
 function parseArgs(): Argv {
@@ -20,9 +24,25 @@ function ensureServiceAccount() {
   if (!credentialPath) {
     throw new Error('Defina GOOGLE_APPLICATION_CREDENTIALS apontando para o arquivo key.json.');
   }
-  if (!fs.existsSync(credentialPath)) {
-    throw new Error(`Arquivo de credencial não encontrado em ${credentialPath}`);
+
+  const candidates = new Set<string>();
+  candidates.add(credentialPath);
+  if (!path.isAbsolute(credentialPath)) {
+    candidates.add(path.resolve(process.cwd(), credentialPath));
+    candidates.add(path.resolve(__dirname, credentialPath));
+    candidates.add(path.resolve(__dirname, '..', credentialPath));
   }
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      process.env.GOOGLE_APPLICATION_CREDENTIALS = candidate;
+      return candidate;
+    }
+  }
+
+  throw new Error(
+    `Arquivo de credencial não encontrado. Verifique o caminho configurado em GOOGLE_APPLICATION_CREDENTIALS (${credentialPath}).`
+  );
 }
 
 function resolveProjectId() {
@@ -94,4 +114,3 @@ async function main() {
 }
 
 main();
-

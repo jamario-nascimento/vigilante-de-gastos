@@ -102,6 +102,7 @@ Como publicar:
 - Fundação: corrigir acentuação, padronizar tipos, remover anotações supérfluas
 - Autenticação/Autorização: guardas por `role`, rotas administrativas
 <!-- Etapa: Autenticação/Autorização - OBSERVAÇÃO: `users` agora possui campo `status` (pending | approved | rejected); ProtectedRoute/Login bloqueiam perfis não aprovados. -->
+<!-- Etapa: Autenticação/Autorização - OBSERVAÇÃO: Tela /admin/users criada para aprovação (AdminRoute) com ações Aprovar/Rejeitar usando Firestore. -->
 - Domínio: `transactions`, `categories`, `budgets` com schemas Zod e adaptadores Firestore
 - UI: layout base, cards de resumo, gráficos (Recharts), tabela (TanStack Table)
 - Qualidade: lint, mensagens de erro UX‑friendly, testes unitários
@@ -148,8 +149,8 @@ Como publicar:
   - PowerShell: `$Env:GOOGLE_APPLICATION_CREDENTIALS="C:\\caminho\\key.json"`
   - Por UID: `npx ts-node seed.ts --project=SEU_PROJECT_ID --user=SEU_UID`
   - Por e-mail: `npx ts-node seed.ts --project=SEU_PROJECT_ID --email=seu@email.com`
-- Seed para todos os usuários: `npx ts-node seed-all-users.ts --project=SEU_PROJECT_ID`
-
+- Seed para todos os usuários: 
+px ts-node seed-all-users.ts --project=SEU_PROJECT_ID\n  - Observação: o caminho definido em GOOGLE_APPLICATION_CREDENTIALS pode ser relativo ao root do projeto (ex.: ./scripts/serviceAccount.json).\n
 Observação: O repositório já contém `firebase.json` e `firestore.rules`/`firestore.indexes.json`. Você pode fazer deploy via CLI ou colar o conteúdo manualmente no Console do Firebase.
 
 # 🧩 Estrutura Geral
@@ -425,3 +426,5 @@ Goiás, Brasil
 - Rode o scanner simples (ignora `dist/` e `node_modules`):
   - `npm run scan:secrets`
 - Se listar ocorrências, revise os arquivos. Em particular, não versionar `dist/` e evitar colocar chaves diretamente no código-fonte.
+
+

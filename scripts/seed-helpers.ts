@@ -1,6 +1,11 @@
 import admin from 'firebase-admin';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Carrega variáveis de ambiente do .env na raiz do projeto
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 dayjs.extend(utc)
 export type Firestore = FirebaseFirestore.Firestore;

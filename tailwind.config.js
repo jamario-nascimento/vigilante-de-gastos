@@ -10,12 +10,16 @@ const config = {
   ],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ["Inter", "sans-serif"],
-        heading: ["Poppins", "sans-serif"],
-        alt: ["Roboto", "sans-serif"]
-      },
       colors: {
+        // Design tokens principais
+        primary: "#137fec",
+        backgroundLight: "#f6f7f8",
+        backgroundDark: "#101922",
+        success: "#28A745",
+        danger: "#DC3545",
+        warning: "#FFC107",
+        // Paleta auxiliar existente
+        brand: colors.violet,
         colorscheme: {
           light: {
             background: colors.gray[50],
@@ -34,7 +38,12 @@ const config = {
             text: colors.gray[100],
           }
         },
-        brand: colors.violet,
+      },
+      fontFamily: {
+        display: ["Inter", "sans-serif"],
+        sans: ["Inter", "sans-serif"],
+        heading: ["Poppins", "sans-serif"],
+        alt: ["Roboto", "sans-serif"],
       },
       fontSize: {
         'xs': '0.75rem',
