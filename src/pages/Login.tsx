@@ -10,13 +10,23 @@ import { Navigate } from "react-router-dom";
 import { isFirebaseError } from "@/utils/isFirebaseError";
 
 const Login = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, status } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   if (loading) return <p>Carregando...</p>;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user && status === "approved") return <Navigate to="/dashboard" replace />;
+  if (user && status && status !== "approved") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
+        <h1 className="text-2xl font-bold mb-2">Aguardando aprovação</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Recebemos seu cadastro. Assim que um administrador aprovar seu acesso, avisaremos por e-mail.
+        </p>
+      </div>
+    );
+  }
 
   const handleLogin = async () => {
     try {

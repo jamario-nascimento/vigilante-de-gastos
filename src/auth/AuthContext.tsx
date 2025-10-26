@@ -3,21 +3,26 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
+type UserStatus = "pending" | "approved" | "rejected";
+
 interface AuthContextType {
   user: User | null;
   role: string | null;
+  status: UserStatus | null;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   role: null,
+  status: null,
   loading: true,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [status, setStatus] = useState<UserStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,20 +41,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               {
                 email: firebaseUser.email,
                 role: "viewer",
+                status: "pending" as UserStatus,
               },
               { merge: true }
             );
             setRole("viewer");
+            setStatus("pending");
           } else {
-            const data = userSnap.data() as { role?: string };
+            const data = userSnap.data() as { role?: string; status?: UserStatus };
             setRole(data?.role ?? "viewer");
+            setStatus(data?.status ?? "pending");
           }
         } else {
           setRole(null);
+          setStatus(null);
         }
-      } catch (e) {
-        console.error("AuthContext: erro ao sincronizar usuário/roles", e);
+      } catch (error) {
+        console.error("AuthContext: erro ao sincronizar usuário", error);
         setRole(null);
+        setStatus(null);
       } finally {
         setLoading(false);
       }
@@ -59,7 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role, loading }}>
+    <AuthContext.Provider value={{ user, role, status, loading }}>
       {children}
     </AuthContext.Provider>
   );

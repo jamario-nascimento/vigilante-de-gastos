@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import admin from 'firebase-admin';
-import dayjs from 'dayjs';
+import { runSeedPipeline } from './seed-helpers';
 
 /*
   Seed idempotente para TODOS os usuários presentes na coleção users
@@ -52,69 +52,13 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-async function ensureDefaultCategories(userId: string) {
-  const now = admin.firestore.FieldValue.serverTimestamp();
-  const defaults = [
-    { name: 'Alimentação', type: 'expense' as const },
-    { name: 'Moradia', type: 'expense' as const },
-    { name: 'Transporte', type: 'expense' as const },
-    { name: 'Salário', type: 'income' as const },
-    { name: 'Freelance', type: 'income' as const },
-  ];
-
-  for (const category of defaults) {
-    const existing = await db
-      .collection('categories')
-      .where('userId', '==', userId)
-      .where('name', '==', category.name)
-      .where('type', '==', category.type)
-      .limit(1)
-      .get();
-
-    if (existing.empty) {
-      await db.collection('categories').add({
-        userId,
-        name: category.name,
-        type: category.type,
-        isDefault: true,
-        createdAt: now,
-        updatedAt: now,
-      });
-      console.log(`[${userId}] categoria criada: ${category.type}/${category.name}`);
-    }
-  }
-}
-
-async function ensureBudget(userId: string) {
-  const month = dayjs().utc().format('YYYY-MM');
-  const id = `${userId}-${month}`;
-  const ref = db.collection('budgets').doc(id);
-  const snap = await ref.get();
-  const now = admin.firestore.FieldValue.serverTimestamp();
-
-  if (!snap.exists) {
-    await ref.set({
-      userId,
-      month,
-      amount: 0,
-      categories: [],
-      spent: 0,
-      alerts: { threshold: 0.8 },
-      createdAt: now,
-      updatedAt: now,
-    });
-    console.log(`[${userId}] budget criado para ${month}`);
-  }
-}
-
 async function main() {
   try {
     console.log(`Projeto: ${projectId || '(default)'} | Aplicando seed para todos os usuários`);
     const snapshot = await db.collection('users').get();
-    const users = snapshot.docs.map((doc) => ({ id: doc.id }));
+    const users = snapshot.docs.map((doc) => ({ id: doc.id, email: (doc.data() as any)?.email as string ?? '' }));
     for (const user of users) {
-      await ensureDefaultCategories(user.id);
-      await ensureBudget(user.id);
+      await runSeedPipeline(db, user.id, user.email);
     }
     console.log('Seed concluído para todos os usuários.');
     process.exit(0);
@@ -125,4 +69,3 @@ async function main() {
 }
 
 main();
-

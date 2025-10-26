@@ -101,6 +101,7 @@ Como publicar:
 
 - Fundação: corrigir acentuação, padronizar tipos, remover anotações supérfluas
 - Autenticação/Autorização: guardas por `role`, rotas administrativas
+<!-- Etapa: Autenticação/Autorização - OBSERVAÇÃO: `users` agora possui campo `status` (pending | approved | rejected); ProtectedRoute/Login bloqueiam perfis não aprovados. -->
 - Domínio: `transactions`, `categories`, `budgets` com schemas Zod e adaptadores Firestore
 - UI: layout base, cards de resumo, gráficos (Recharts), tabela (TanStack Table)
 - Qualidade: lint, mensagens de erro UX‑friendly, testes unitários
@@ -150,6 +151,254 @@ Como publicar:
 - Seed para todos os usuários: `npx ts-node seed-all-users.ts --project=SEU_PROJECT_ID`
 
 Observação: O repositório já contém `firebase.json` e `firestore.rules`/`firestore.indexes.json`. Você pode fazer deploy via CLI ou colar o conteúdo manualmente no Console do Firebase.
+
+# 🧩 Estrutura Geral
+
+Aplicação para controle financeiro com foco em:
+- Gastos e recebimentos (com rastreio por mês e categoria)
+- Faturas futuras (parcelamento inteligente)
+- Entradas recorrentes e avisos de renovação (clientes, hospedagem, etc.)
+- Controle de investimentos
+- Multiusuário com aprovação manual de novos cadastros
+
+---
+
+# ✅ ETAPA 1: Autenticação e Controle de Acesso (JÁ CONCLUÍDA)
+
+- [x] Login via Firebase Auth (Email/senha e GitHub)
+- [x] Proteção de rotas com `<ProtectedRoute />`
+- [x] Contexto de usuário (`AuthContext`)
+- [x] Collection `users` com controle de `role` (`admin` ou `viewer`)
+- [x] Seeder cria usuário no Firestore na primeira entrada
+- [x] Painel bloqueado para não autorizados
+
+📌 **Próxima ação:** garantir que `role !== 'admin'` bloqueia acesso às rotas administrativas.
+
+---
+
+# 🧭 ETAPA 2: Sistema de Aprovação de Usuários
+
+- [ ] Página (admin) com lista de usuários pendentes
+- [ ] Botão para aprovar ou negar novos cadastros
+- [ ] Campo adicional: `status: "pending" | "approved" | "rejected"`
+- [ ] Bloqueio de acesso para `status !== "approved"` mesmo que o login seja válido
+
+📁 Firestore:
+```ts
+users/{uid}: {
+  email: string,
+  role: "admin" | "viewer",
+  status: "approved" | "pending" | "rejected",
+  createdAt, updatedAt
+}
+💳 ETAPA 3: Transações (Receitas e Despesas)
+
+ Modelar Firestore transactions
+
+ CRUD de transações:
+
+Valor
+
+Tipo: "income" ou "expense"
+
+Categoria
+
+Parcelado? (quantas parcelas e valor por mês)
+
+Forma de pagamento (dinheiro, cartão, etc.)
+
+Tags, descrição, data
+
+ Layout de tabela (TanStack Table)
+
+ Filtros por mês, categoria, tipo
+
+ Recalcular total mensal e fatura do cartão
+
+📁 Firestore:
+```
+transactions/{id}: {
+  userId,
+  amount,
+  type,
+  categoryId,
+  date,
+  isInstallment,
+  installmentsCount,
+  description,
+  paymentMethod,
+  createdAt,
+  updatedAt
+}
+```
+🗂️ ETAPA 4: Categorias de Transação
+
+ Listagem e CRUD de categorias
+
+ Categorias padrão por tipo (income, expense)
+
+ Cores, ícones e campo isDefault
+
+ Seeder inclui categorias padrão
+
+📁 Firestore:
+
+``` 
+categories/{id}: {
+  userId,
+  name,
+  type,
+  icon,
+  color,
+  isDefault,
+  createdAt,
+  updatedAt
+}
+```
+
+📅 ETAPA 5: Planejamento Financeiro e Orçamento
+
+ Tela de orçamentos mensais
+
+ Campo: mês, valor limite, por categoria
+
+ Gatilhos visuais para alertar quando ultrapassar
+
+ Relatório visual com Recharts (pizza, barra)
+
+📁 Firestore:
+
+```budgets/{id}: {
+  userId,
+  month: 'YYYY-MM',
+  amount,
+  categories: [{ categoryId, limit }],
+  alerts: { threshold },
+  createdAt,
+  updatedAt
+}
+ ```
+
+ 🧾 ETAPA 6: Controle de Clientes e Serviços
+
+ CRUD de clientes
+
+ Lançar contratos/serviços com data de renovação
+
+ Parcelas e aviso de vencimento
+
+ Notificação (via toast/email) próxima da renovação
+
+📁 Firestore (exemplo):
+
+```clients/{id}: {
+  name,
+  email,
+  services: [
+    {
+      name,
+      startDate,
+      endDate,
+      amount,
+      installments,
+      nextDueDate
+    }
+  ],
+  createdAt,
+  updatedAt
+}
+```
+
+📈 ETAPA 7: Investimentos
+
+ CRUD de investimentos
+
+ Tipo (ação, fundo, crypto)
+
+ Valor investido, data, retorno
+
+ Relatório gráfico (linha ou barra)
+
+📁 Firestore:
+```
+investments/{id}: {
+  userId,
+  type,
+  name,
+  amount,
+  date,
+  returnRate,
+  createdAt,
+  updatedAt
+}
+
+```
+
+🧪 ETAPA 8: Qualidade e Testes
+
+ Testes unitários (Vitest)
+
+ Lint e formatação padronizada
+
+ Tratamento de erros amigáveis
+
+ Feedbacks visuais: loading, erro, sucesso
+
+🎯 ETAPA 9: Dashboard Geral
+
+ Cards resumo: saldo atual, gastos do mês, fatura prevista
+
+ Gráficos (pizza, barra, linha)
+
+ Filtros rápidos por período
+
+🔐 ETAPA 10: Segurança e Controle
+
+ Finalizar firestore.rules
+
+ Regras de leitura/escrita por userId e role
+
+ Logs de erro e uso (opcional: Firebase Functions)
+
+⚙️ Scripts e Automação
+
+ seed.ts: cria usuário, categorias e orçamento inicial
+
+ seed-all-users.ts: aplica a todos os usuários existentes
+
+ scan-secrets: busca por vazamentos de segredo
+
+ firebase:setup: valida .env, gera .firebaserc e publica regras/índices
+
+📌 Ordem sugerida de implementação (roadmap de sprints)
+
+✅ Login e autorização
+
+🟡 Aprovação de usuários
+
+🔜 CRUD de transações
+
+🔜 Categorias
+
+🔜 Orçamento mensal
+
+🔜 Clientes e serviços com renovação
+
+🔜 Investimentos
+
+🔜 Dashboard
+
+🔜 Segurança final (rules)
+
+🔜 Qualidade/testes
+
+🧠 Observações finais
+
+Sempre seguir o README.md como plano-mestre
+
+Anotações de melhorias devem ser comentadas por etapa
+
+Evitar tecnologias externas sem leitura da documentação atual
 
 ## Autor
 
