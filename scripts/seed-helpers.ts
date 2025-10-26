@@ -1,6 +1,8 @@
 import admin from 'firebase-admin';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc'
 
+dayjs.extend(utc)
 export type Firestore = FirebaseFirestore.Firestore;
 
 const { FieldValue, Timestamp } = admin.firestore;
