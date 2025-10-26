@@ -126,7 +126,7 @@ Como publicar:
   - Rode: `npm run configure:firebase`
 
 - Setup completo via script (gera .firebaserc e faz deploy de regras/índices):
-  - Pré‑requisitos:
+  - Pré-requisitos:
     - CLI do Firebase instalada: `npm i -g firebase-tools`
     - Autenticação: `firebase login`
   - Execução: `npm run firebase:setup`
@@ -135,6 +135,13 @@ Como publicar:
   - Alternativas:
     - Deploy só das regras: `npm run firebase:deploy:rules`
     - Deploy só dos índices: `npm run firebase:deploy:indexes`
+
+### Autenticação manual via Firebase CLI
+
+1. Login: `firebase login` (abre o navegador; use a conta com acesso ao projeto `vigilante-de-gastos`).
+2. Listar projetos: `firebase projects:list`
+3. Definir projeto ativo: `firebase use vigilante-de-gastos`
+4. Rodar setup (ou comandos individuais) conforme descrito acima.
 - Rodar seed para um usuário (scripts):
   - `cd scripts && npm install`
   - PowerShell: `$Env:GOOGLE_APPLICATION_CREDENTIALS="C:\\caminho\\key.json"`

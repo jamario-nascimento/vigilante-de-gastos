@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import Router from "./routes";
 import { AuthProvider } from "@/auth/AuthContext";
+import { initAnalytics } from "@/auth/firebase";
 import "./index.css";
 
 const root = document.getElementById("root");
@@ -14,3 +15,5 @@ ReactDOM.createRoot(root).render(
     </AuthProvider>
   </React.StrictMode>
 );
+
+initAnalytics();

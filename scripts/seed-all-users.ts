@@ -1,23 +1,47 @@
+import fs from 'node:fs';
+import admin from 'firebase-admin';
+import dayjs from 'dayjs';
+
 /*
   Seed idempotente para TODOS os usuários presentes na coleção users
   Uso:
     ts-node seed-all-users.ts --project=PROJECT_ID
 */
 
-import admin from 'firebase-admin';
-import dayjs from 'dayjs';
-
 function parseArgs(): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = {};
-  for (const a of process.argv.slice(2)) {
-    const m = a.match(/^--([^=]+)=(.*)$/);
-    if (m) out[m[1]] = m[2];
+  for (const arg of process.argv.slice(2)) {
+    const match = arg.match(/^--([^=]+)=(.*)$/);
+    if (match) out[match[1]] = match[2];
   }
   return out;
 }
 
 const args = parseArgs();
-const projectId = args.project || process.env.GCLOUD_PROJECT;
+
+function ensureServiceAccount() {
+  const credentialPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  if (!credentialPath) {
+    throw new Error('Defina GOOGLE_APPLICATION_CREDENTIALS apontando para o arquivo key.json.');
+  }
+  if (!fs.existsSync(credentialPath)) {
+    throw new Error(`Arquivo de credencial não encontrado em ${credentialPath}`);
+  }
+}
+
+function resolveProjectId() {
+  return (
+    args.project ||
+    process.env.FIREBASE_PROJECT_ID ||
+    process.env.GCLOUD_PROJECT ||
+    process.env.GOOGLE_CLOUD_PROJECT ||
+    process.env.VITE_FIREBASE_PROJECT_ID ||
+    undefined
+  );
+}
+
+ensureServiceAccount();
+const projectId = resolveProjectId();
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -37,38 +61,41 @@ async function ensureDefaultCategories(userId: string) {
     { name: 'Salário', type: 'income' as const },
     { name: 'Freelance', type: 'income' as const },
   ];
-  for (const c of defaults) {
-    const q = await db
+
+  for (const category of defaults) {
+    const existing = await db
       .collection('categories')
       .where('userId', '==', userId)
-      .where('name', '==', c.name)
-      .where('type', '==', c.type)
+      .where('name', '==', category.name)
+      .where('type', '==', category.type)
       .limit(1)
       .get();
-    if (q.empty) {
+
+    if (existing.empty) {
       await db.collection('categories').add({
         userId,
-        name: c.name,
-        type: c.type,
+        name: category.name,
+        type: category.type,
         isDefault: true,
         createdAt: now,
         updatedAt: now,
       });
-      console.log(`[${userId}] categoria criada: ${c.type}/${c.name}`);
+      console.log(`[${userId}] categoria criada: ${category.type}/${category.name}`);
     }
   }
 }
 
 async function ensureBudget(userId: string) {
-  const m = dayjs().utc().format('YYYY-MM');
-  const id = `${userId}-${m}`;
+  const month = dayjs().utc().format('YYYY-MM');
+  const id = `${userId}-${month}`;
   const ref = db.collection('budgets').doc(id);
   const snap = await ref.get();
   const now = admin.firestore.FieldValue.serverTimestamp();
+
   if (!snap.exists) {
     await ref.set({
       userId,
-      month: m,
+      month,
       amount: 0,
       categories: [],
       spent: 0,
@@ -76,23 +103,23 @@ async function ensureBudget(userId: string) {
       createdAt: now,
       updatedAt: now,
     });
-    console.log(`[${userId}] budget criado para ${m}`);
+    console.log(`[${userId}] budget criado para ${month}`);
   }
 }
 
 async function main() {
   try {
-    console.log(`Projeto: ${projectId || '(default)'} | Seed para todos os usuários`);
-    const usersSnap = await db.collection('users').get();
-    const users = usersSnap.docs.map((d) => ({ id: d.id, email: (d.data() as any)?.email as string | undefined }));
-    for (const u of users) {
-      await ensureDefaultCategories(u.id);
-      await ensureBudget(u.id);
+    console.log(`Projeto: ${projectId || '(default)'} | Aplicando seed para todos os usuários`);
+    const snapshot = await db.collection('users').get();
+    const users = snapshot.docs.map((doc) => ({ id: doc.id }));
+    for (const user of users) {
+      await ensureDefaultCategories(user.id);
+      await ensureBudget(user.id);
     }
     console.log('Seed concluído para todos os usuários.');
     process.exit(0);
-  } catch (e: any) {
-    console.error('Falha no seed-all-users:', e?.message || e);
+  } catch (error) {
+    console.error('Falha no seed-all-users:', (error as Error).message);
     process.exit(1);
   }
 }
